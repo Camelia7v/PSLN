@@ -1,0 +1,8 @@
+Terminals:
+a ε b
+Variables:
+S A B
+Productions:
+S -> A S B;
+A -> a A S | a | ε; 
+B -> S b S | A | b b

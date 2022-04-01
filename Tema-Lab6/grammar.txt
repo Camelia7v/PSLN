@@ -1,0 +1,41 @@
+Terminals:
+the a that this book flight meal money book prefer I he she me Houston NWA does from to on near through
+Variables:
+S NP VP Aux Pronoun Proper-Noun Det Nominal Noun PP Verb Prep 
+Productions:
+S -> NP VP;
+S -> Aux NP VP; 
+S -> VP;
+NP -> Pronoun; 
+NP -> Proper-Noun; 
+NP -> Det Nominal; 
+Nominal -> Noun; 
+Nominal -> Nominal Noun; 
+Nominal -> Nominal PP; 
+VP -> Verb; 
+VP -> Verb NP; 
+VP -> VP PP; 
+PP -> Prep NP; 
+Det -> the; 
+Det -> a; 
+Det -> that; 
+Det -> this; 
+Noun -> book; 
+Noun -> flight; 
+Noun -> meal; 
+Noun -> money; 
+Verb -> book; 
+Verb -> book; 
+Verb -> prefer; 
+Pronoun -> I;
+Pronoun -> he;
+Pronoun -> she; 
+Pronoun -> me; 
+Proper-Noun -> Houston; 
+Proper-Noun -> NWA; 
+Aux -> does;
+Prep -> from; 
+Prep -> to; 
+Prep -> on; 
+Prep -> near; 
+Prep -> through
