@@ -1,8 +1,8 @@
-S -> A A1
+S -> A A1 | S B | A S
 A1 -> S B
-A -> A B1 | a | ε
+A -> A B1 | a | A S
 B1 -> A S
 Z -> b
-B -> S C1 | Z Z | A B1 | a | ε
+B -> S C1 | Z Z | A B1 | a | A S
 C1 -> Z S
-S0 -> A A1
+S0 -> A A1 | S B | A S | A A1 | S B | A S

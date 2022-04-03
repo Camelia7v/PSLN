@@ -4,18 +4,14 @@ import itertools
 left, right = 0, 1
 
 
-def union(lst1, lst2):
-    final_list = list(set().union(lst1, lst2))
-    return final_list
-
-
 def loadModel(modelPath):
     file = open(modelPath).read()
-    K = (file.split("Variables:\n")[0].replace("Terminals:\n", "").replace("\n", ""))
-    V = (file.split("Variables:\n")[1].split("Productions:\n")[0].replace("Variables:\n", "").replace("\n", ""))
-    P = (file.split("Productions:\n")[1])
+    terminals = (file.split("Non-terminals:\n")[0].replace("Terminals:\n", "").replace("\n", ""))
+    non_terminals = (file.split("Non-terminals:\n")[1].split("Productions:\n")[0].replace("Non-terminals:\n", "")
+                     .replace("\n", ""))
+    productions = (file.split("Productions:\n")[1])
 
-    return cleanAlphabet(K), cleanAlphabet(V), cleanProduction(P)
+    return cleanAlphabet(terminals), cleanAlphabet(non_terminals), cleanProduction(productions)
 
 
 # Make production easy to work with
@@ -51,7 +47,6 @@ def seekAndDestroy(target, productions):
 def setupDict(productions, variables, terms):
     result = {}
     for production in productions:
-        #
         if production[left] in variables and production[right][0] in terms and len(production[right]) == 1:
             result[production[right][0]] = production[left]
     return result
@@ -75,22 +70,7 @@ def rewrite(target, production):
     return result
 
 
-def dict2Set(dictionary):
-    result = []
-    for key in dictionary:
-        result.append((dictionary[key], key))
-    return result
-
-
-def pprintRules(rules):
-    for rule in rules:
-        tot = ""
-        for term in rule[right]:
-            tot = tot + " " + term
-        print(rule[left] + " -> " + tot)
-
-
-def prettyForm(rules):
+def prettyForm(rules, terminals):
     dictionary = {}
     for rule in rules:
         if rule[left] in dictionary:
@@ -99,5 +79,14 @@ def prettyForm(rules):
             dictionary[rule[left]] = ' '.join(rule[right])
     result = ""
     for key in dictionary:
-        result += key + " -> " + dictionary[key] + "\n"
+        right_side = dictionary[key].split(" | ")
+        right_side_str = ""
+        for i in range(len(right_side)):
+            if right_side[i] in terminals:
+                right_side[i] = f"'{right_side[i]}'"
+            if i == len(right_side) - 1:
+                right_side_str += right_side[i]
+            else:
+                right_side_str += right_side[i] + " | "
+        result += key + " -> " + right_side_str + "\n"
     return result

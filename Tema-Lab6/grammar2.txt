@@ -1,8 +1,8 @@
 Terminals:
-a ε b
-Variables:
+a epsilon b
+Non-terminals:
 S A B
 Productions:
 S -> A S B;
-A -> a A S | a | ε; 
+A -> a A S | a | epsilon;
 B -> S b S | A | b b

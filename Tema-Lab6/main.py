@@ -1,11 +1,10 @@
 import helper
-import sys
+import nltk
 
 left, right = 0, 1
 
-K, V, Productions = [], [], []
-variablesJar = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U",
-                "W", "X", "Y", "Z"]
+variablesJar = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M",
+                "N", "O", "P", "Q", "R", "S", "T", "U", "W", "X", "Y", "Z"]
 
 
 def isUnitary(rule, variables):
@@ -15,42 +14,55 @@ def isUnitary(rule, variables):
 
 
 def isSimple(rule):
-    if rule[left] in V and rule[right][0] in K and len(rule[right]) == 1:
+    if rule[left] in non_terminals and rule[right][0] in terminals and len(rule[right]) == 1:
         return True
     return False
 
 
-for nonTerminal in V:
-    if nonTerminal in variablesJar:
-        variablesJar.remove(nonTerminal)
-
-
-# Add S0->S rule––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––START
+# Add S0->S rule–––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––-------–––START
 def START(productions, variables):
     variables.append('S0')
     return [('S0', [variables[0]])] + productions
 
 
-# Remove rules containing both terms and variables, like A->Bc, replacing by A->BZ and Z->c–––––––––––TERM
+# Remove rules containing null, like A->ε, without changing the expressiveness of the grammar--------ELIMINATE_EPSILON
+def ELIMINATE_EPSILON(productions):
+    for production in productions:
+        if production[left] in non_terminals and len(production[right]) == 1:
+            if production[right][0] == "ε" or production[right][0] == "epsilon" or production[right][0] == "Îµ":
+                non_terminal = production[left]
+                productions.remove(production)
+                for rule in productions:
+                    for index, value in enumerate(rule[right]):
+                        if value == non_terminal:
+                            right_side = rule[right][:index] + rule[right][index + 1:]
+                            if not right_side:
+                                right_side.append("epsilon")
+                                productions.append((rule[left], right_side))
+                            else:
+                                productions.append((rule[left], right_side))
+    return productions
+
+
+# Remove rules containing both terms and variables, like A->Bc, replacing by A->BZ and Z->c–––––––––––------------TERM
 def TERM(productions, variables):
     newProductions = []
     # create a dictionary for all base production, like A->a, in the form dic['a'] = 'A'
-    dictionary = helper.setupDict(productions, variables, terms=K)
+    dictionary = helper.setupDict(productions, variables, terms=terminals)
     for production in productions:
         # check if the production is simple
         if isSimple(production):
             # in that case there is nothing to change
             newProductions.append(production)
         else:
-            for term in K:
+            for term in terminals:
                 for index, value in enumerate(production[right]):
-                    if term == value and not term in dictionary:
+                    if term == value and term not in dictionary:
                         # it's created a new production variable->term and added to it
                         dictionary[term] = variablesJar.pop()
                         # Variables set it's updated adding new variable
-                        V.append(dictionary[term])
+                        non_terminals.append(dictionary[term])
                         newProductions.append((dictionary[term], [term]))
-
                         production[right][index] = dictionary[term]
                     elif term == value:
                         production[right][index] = dictionary[term]
@@ -60,12 +72,11 @@ def TERM(productions, variables):
     return newProductions
 
 
-# Eliminate non unitary rules––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––BIN
+# Eliminate non unitary rules––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––------––BIN
 def BIN(productions, variables):
     result = []
     for production in productions:
         k = len(production[right])
-        # newVar = production[left]
         if k <= 2:
             result.append(production)
         else:
@@ -80,7 +91,7 @@ def BIN(productions, variables):
     return result
 
 
-# Delete non terminal rules–––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––DEL
+# Delete non terminal rules–––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––-------––DEL
 def DEL(productions):
     newSet = []
     # seekAndDestroy throw back in:
@@ -102,15 +113,15 @@ def DEL(productions):
                       if productions[i] not in newSet])
 
 
-def unit_routine(rules, variables):
+def unit_routine(productions, variables):
     unitaries, result = [], []
-    for aRule in rules:
+    for aRule in productions:
         if isUnitary(aRule, variables):
             unitaries.append((aRule[left], aRule[right][0]))
         else:
             result.append(aRule)
     for uni in unitaries:
-        for rule in rules:
+        for rule in productions:
             if uni[right] == rule[left] and uni[left] != rule[left]:
                 result.append((uni[left], rule[right]))
 
@@ -129,19 +140,33 @@ def UNIT(productions, variables):
 
 
 if __name__ == '__main__':
-    if len(sys.argv) > 1:
-        modelPath = str(sys.argv[1])
-    else:
-        modelPath = 'grammar.txt'
+    grammar_path = 'grammar.txt'
+    terminals, non_terminals, rules = helper.loadModel(grammar_path)
 
-    K, V, Productions = helper.loadModel(modelPath)
+    rules = START(rules, variables=non_terminals)
+    rules = ELIMINATE_EPSILON(rules)
+    rules = TERM(rules, variables=non_terminals)
+    rules = BIN(rules, variables=non_terminals)
+    rules = DEL(rules)
+    rules = UNIT(rules, variables=non_terminals)
+    CNF_grammar = helper.prettyForm(rules, terminals)
 
-    Productions = START(Productions, variables=V)
-    Productions = TERM(Productions, variables=V)
-    Productions = BIN(Productions, variables=V)
-    Productions = DEL(Productions)
-    Productions = UNIT(Productions, variables=V)
+    print("\nIn the CNF grammar there are ", len(rules), " rules.")
+    print("The rules are: ")
+    print(CNF_grammar)
+    open(f'{grammar_path[:-4]}_output.txt', 'w').write(CNF_grammar)
 
-    print(helper.prettyForm(Productions))
-    print(len(Productions))
-    open(f'{modelPath[:-4]}_output.txt', 'w').write(helper.prettyForm(Productions))
+    # Visualisation
+    print("\nPhrase structure tree(s) for 'The flight includes a meal.'")
+    grammar = nltk.CFG.fromstring(CNF_grammar)
+    sentence = ['the', 'flight', 'include', 'a', 'meal']
+    parser = nltk.ChartParser(grammar)
+    for tree in parser.parse(sentence):
+        print(tree)
+
+    print("\nPhrase structure tree(s) for 'She booked the book on the flight.'")
+    grammar = nltk.CFG.fromstring(CNF_grammar)
+    sentence = ['she', 'book', 'the', 'book', 'on', 'the', 'flight']
+    parser = nltk.ChartParser(grammar)
+    for tree in parser.parse(sentence):
+        print(tree)
