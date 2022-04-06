@@ -3,12 +3,12 @@ import nltk
 
 left, right = 0, 1
 
-variablesJar = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M",
-                "N", "O", "P", "Q", "R", "S", "T", "U", "W", "X", "Y", "Z"]
+alphabet = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M",
+            "N", "O", "P", "Q", "R", "S", "T", "U", "W", "X", "Y", "Z"]
 
 
-def isUnitary(rule, variables):
-    if rule[left] in variables and rule[right][0] in variables and len(rule[right]) == 1:
+def isUnitary(rule, non_terminals):
+    if rule[left] in non_terminals and rule[right][0] in non_terminals and len(rule[right]) == 1:
         return True
     return False
 
@@ -20,12 +20,12 @@ def isSimple(rule):
 
 
 # Add S0->S rule–––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––-------–––START
-def START(productions, probabilities, variables):
-    variables.append('S0')
+def START(productions, probabilities, non_terminals):
+    non_terminals.append('S0')
     probabilities.reverse()
     probabilities.append('1.0')
     probabilities.reverse()
-    return [('S0', [variables[0]])] + productions
+    return [('S0', [non_terminals[0]])] + productions
 
 
 # Remove rules containing null, like A->ε, without changing the expressiveness of the grammar--------ELIMINATE_EPSILON
@@ -48,10 +48,10 @@ def ELIMINATE_EPSILON(productions):
 
 
 # Remove rules containing both terms and variables, like A->Bc, replacing by A->BZ and Z->c–––––––––––------------TERM
-def TERM(productions, variables):
+def TERM(productions, non_terminals):
     newProductions = []
     # create a dictionary for all base production, like A->a, in the form dic['a'] = 'A'
-    dictionary = helper.setupDict(productions, variables, terms=terminals)
+    dictionary = helper.setupDict(productions, non_terminals, terms=terminals)
     for production in productions:
         # check if the production is simple
         if isSimple(production):
@@ -62,7 +62,7 @@ def TERM(productions, variables):
                 for index, value in enumerate(production[right]):
                     if term == value and term not in dictionary:
                         # it's created a new production variable->term and added to it
-                        dictionary[term] = variablesJar.pop()
+                        dictionary[term] = alphabet.pop()
                         # Variables set it's updated adding new variable
                         non_terminals.append(dictionary[term])
                         newProductions.append((dictionary[term], [term]))
@@ -76,20 +76,20 @@ def TERM(productions, variables):
 
 
 # Eliminate non unitary rules––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––------––BIN
-def BIN(productions, probabilities, variables):
+def BIN(productions, probabilities, non_terminals):
     result = []
     for production in productions:
         k = len(production[right])
         if k <= 2:
             result.append(production)
         else:
-            newVar = variablesJar.pop(0)
-            variables.append(newVar + '1')
+            newVar = alphabet.pop(0)
+            non_terminals.append(newVar + '1')
             result.append((production[left], [production[right][0]] + [newVar + '1']))
-            probabilities.insert(productions.index(production)+1, '1.0')
+            probabilities.insert(productions.index(production) + 1, '1.0')
             for i in range(1, k - 2):
                 var, var2 = newVar + str(i), newVar + str(i + 1)
-                variables.append(var2)
+                non_terminals.append(var2)
                 result.append((var, [production[right][i], var2]))
             result.append((newVar + str(k - 2), production[right][k - 2:k]))
     return result
@@ -117,15 +117,15 @@ def DEL(productions):
                       if productions[i] not in newSet])
 
 
-def unit_routine(productions, probabilities, variables):
+def unit_routine(productions, probabilities, non_terminals):
     unitaries, result, unitary_probabilities = [], [], []
     new_probabilities = probabilities.copy()
-    i=0
+    i = 0
     for aRule in productions:
-        if isUnitary(aRule, variables):
+        if isUnitary(aRule, non_terminals):
             unitaries.append((aRule[left], aRule[right][0]))
             unitary_probabilities.append(probabilities[productions.index(aRule)])
-            del new_probabilities[productions.index(aRule)-i]
+            del new_probabilities[productions.index(aRule) - i]
             i = i + 1
         else:
             result.append(aRule)
@@ -138,13 +138,13 @@ def unit_routine(productions, probabilities, variables):
     return result, new_probabilities
 
 
-def UNIT(productions, probabilities, variables):
+def UNIT(productions, probabilities, non_terminals):
     i = 0
-    result, new_probabilities = unit_routine(productions, probabilities, variables)
-    tmp, tmp_probabilities = unit_routine(result, new_probabilities, variables)
+    result, new_probabilities = unit_routine(productions, probabilities, non_terminals)
+    tmp, tmp_probabilities = unit_routine(result, new_probabilities, non_terminals)
     while result != tmp and i < 1000:
-        result, new_probabilities = unit_routine(tmp, tmp_probabilities, variables)
-        tmp, tmp_probabilities = unit_routine(result, new_probabilities, variables)
+        result, new_probabilities = unit_routine(tmp, tmp_probabilities, non_terminals)
+        tmp, tmp_probabilities = unit_routine(result, new_probabilities, non_terminals)
         i += 1
     return result, new_probabilities
 
@@ -157,22 +157,23 @@ def calculate_probability(tree, rules, probabilities, j):
     else:
         for i in range(len(rules)):
             if tree[0].label() in rules[i][1] and tree.label() in rules[i][0]:
-                return float(probabilities[i]
+                return float(probabilities[i])
 
-                             )
+
 def separate_tree(tree, rules, probabilities, sentence_probability):
     lhs = tree[0]
     rhs = tree[1]
     rhsvalue, lhsvalue = 1, 1
     if len(lhs) == 1:
-        sentence_probability = sentence_probability * calculate_probability(lhs, rules, probabilities,1)
+        sentence_probability = sentence_probability * calculate_probability(lhs, rules, probabilities, 1)
     else:
-        lhsvalue = separate_tree(lhs, rules, probabilities,1)
+        lhsvalue = separate_tree(lhs, rules, probabilities, 1)
     if len(rhs) == 1:
-        sentence_probability = sentence_probability * calculate_probability(rhs, rules, probabilities,1)
+        sentence_probability = sentence_probability * calculate_probability(rhs, rules, probabilities, 1)
     else:
         rhsvalue = separate_tree(rhs, rules, probabilities, 1)
-    sentence_probability =sentence_probability * calculate_probability(tree, rules, probabilities,2) * lhsvalue * rhsvalue
+    sentence_probability = sentence_probability * calculate_probability(tree, rules, probabilities,
+                                                                        2) * lhsvalue * rhsvalue
     return sentence_probability
 
 
@@ -180,20 +181,20 @@ if __name__ == '__main__':
     grammar_path = 'grammar.txt'
     terminals, non_terminals, rules, probabilities = helper.loadModel(grammar_path)
 
-    rules = START(rules, probabilities, variables=non_terminals)
+    rules = START(rules, probabilities, non_terminals)
     rules = ELIMINATE_EPSILON(rules)
-    rules = TERM(rules, variables=non_terminals)
-    rules = BIN(rules, probabilities, variables=non_terminals)
+    rules = TERM(rules, non_terminals)
+    rules = BIN(rules, probabilities, non_terminals)
     rules = DEL(rules)
-    rules, probabilities = UNIT(rules, probabilities, variables=non_terminals)
+    rules, probabilities = UNIT(rules, probabilities, non_terminals)
     CNF_grammar, CNF_grammar_P = helper.prettyForm(rules, probabilities, terminals)
 
     print("\nIn the CNF grammar there are ", len(rules), " rules and ", len(probabilities), " probabilities.")
     print("The rules are: ")
     print(CNF_grammar)
+    print("The probabilities are: ")
     print(CNF_grammar_P)
-    open(f'{grammar_path[:-4]}_output.txt', 'w').write(CNF_grammar+CNF_grammar_P)
-
+    open(f'{grammar_path[:-4]}_output.txt', 'w').write(CNF_grammar + CNF_grammar_P)
 
     # Visualisation
     print("\nPhrase structure tree(s) for 'The flight includes a meal.'")
@@ -206,7 +207,7 @@ if __name__ == '__main__':
         if len(tree) > 1:
             value = separate_tree(tree, rules, probabilities, sentence_probability)
         print(tree)
-        print("The probability of the tree is: " + str(value))
+        print("The probability of the tree is: " + str(value) + ".\n")
         # 0.000031104
 
     print("\nPhrase structure tree(s) for 'She booked the book on the flight.'")
@@ -219,4 +220,4 @@ if __name__ == '__main__':
         if len(tree) > 1:
             value = separate_tree(tree, rules, probabilities, sentence_probability)
         print(tree)
-        print("The probability of the tree is: " + str(value))
+        print("The probability of the tree is: " + str(value) + ".\n")

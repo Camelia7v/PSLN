@@ -1,6 +1,5 @@
 import itertools
 
-
 left, right = 0, 1
 
 
@@ -11,7 +10,8 @@ def loadModel(modelPath):
                      .replace("\n", ""))
     productions = (file.split("Productions:\n")[1].split("Probabilities:\n")[0])
     probabilities = (file.split("Probabilities:\n")[1])
-    return cleanAlphabet(terminals), cleanAlphabet(non_terminals), cleanProduction(productions), cleanAlphabet(probabilities)
+    return cleanAlphabet(terminals), cleanAlphabet(non_terminals), cleanProduction(productions), cleanAlphabet(
+        probabilities)
 
 
 # Make production easy to work with
@@ -76,10 +76,10 @@ def prettyForm(rules, probabilities, terminals):
     for rule in rules:
         if rule[left] in dictionary:
             dictionary[rule[left]] += ' | ' + ' '.join(rule[right])
-            dictionary_P[rule[left]+'_P'] += ' | ' + ''.join(probabilities[rules.index(rule)])
+            dictionary_P[rule[left] + '_P'] += ' | ' + ''.join(probabilities[rules.index(rule)])
         else:
             dictionary[rule[left]] = ' '.join(rule[right])
-            dictionary_P[rule[left]+'_P'] = ''.join(probabilities[rules.index(rule)])
+            dictionary_P[rule[left] + '_P'] = ''.join(probabilities[rules.index(rule)])
     result = ""
     result_P = ""
     for key in dictionary:
@@ -93,7 +93,6 @@ def prettyForm(rules, probabilities, terminals):
             else:
                 right_side_str += right_side[i] + " | "
         result += key + " -> " + right_side_str + "\n"
-
 
     for key in dictionary_P:
         right_side = dictionary_P[key].split(" | ")
