@@ -1,6 +1,6 @@
 Terminals:
 the a that this book flight meal money book include prefer I he she me Houston NWA does from to on near through
-Non-terminals:
+Non-Terminals:
 S NP VP Aux Pronoun Proper-Noun Det Nominal Noun PP Verb Prep 
 Productions:
 S -> NP VP;
@@ -25,7 +25,7 @@ Noun -> flight;
 Noun -> meal; 
 Noun -> money; 
 Verb -> book; 
-Verb -> include; 
+Verb -> include;
 Verb -> prefer; 
 Pronoun -> I;
 Pronoun -> he;
@@ -39,3 +39,5 @@ Prep -> to;
 Prep -> on; 
 Prep -> near; 
 Prep -> through
+Probabilities:
+0.8 0.1 0.1 0.2 0.2 0.6 0.3 0.2 0.5 0.2 0.5 0.3 1.0 0.6 0.2 0.1 0.1 0.1 0.5 0.2 0.2 0.5 0.2 0.3 0.5 0.1 0.1 0.3 0.8 0.2 1.0 0.25 0.25 0.1 0.2 0.2

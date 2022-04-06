@@ -6,12 +6,12 @@ left, right = 0, 1
 
 def loadModel(modelPath):
     file = open(modelPath).read()
-    terminals = (file.split("Non-terminals:\n")[0].replace("Terminals:\n", "").replace("\n", ""))
-    non_terminals = (file.split("Non-terminals:\n")[1].split("Productions:\n")[0].replace("Non-terminals:\n", "")
+    terminals = (file.split("Non-Terminals:\n")[0].replace("Terminals:\n", "").replace("\n", ""))
+    non_terminals = (file.split("Non-Terminals:\n")[1].split("Productions:\n")[0].replace("Non-Terminals:\n", "")
                      .replace("\n", ""))
-    productions = (file.split("Productions:\n")[1])
-
-    return cleanAlphabet(terminals), cleanAlphabet(non_terminals), cleanProduction(productions)
+    productions = (file.split("Productions:\n")[1].split("Probabilities:\n")[0])
+    probabilities = (file.split("Probabilities:\n")[1])
+    return cleanAlphabet(terminals), cleanAlphabet(non_terminals), cleanProduction(productions), cleanAlphabet(probabilities)
 
 
 # Make production easy to work with
@@ -70,14 +70,18 @@ def rewrite(target, production):
     return result
 
 
-def prettyForm(rules, terminals):
+def prettyForm(rules, probabilities, terminals):
     dictionary = {}
+    dictionary_P = {}
     for rule in rules:
         if rule[left] in dictionary:
             dictionary[rule[left]] += ' | ' + ' '.join(rule[right])
+            dictionary_P[rule[left]+'_P'] += ' | ' + ''.join(probabilities[rules.index(rule)])
         else:
             dictionary[rule[left]] = ' '.join(rule[right])
+            dictionary_P[rule[left]+'_P'] = ''.join(probabilities[rules.index(rule)])
     result = ""
+    result_P = ""
     for key in dictionary:
         right_side = dictionary[key].split(" | ")
         right_side_str = ""
@@ -89,4 +93,17 @@ def prettyForm(rules, terminals):
             else:
                 right_side_str += right_side[i] + " | "
         result += key + " -> " + right_side_str + "\n"
-    return result
+
+
+    for key in dictionary_P:
+        right_side = dictionary_P[key].split(" | ")
+        right_side_str = ""
+        for i in range(len(right_side)):
+            if right_side[i] in terminals:
+                right_side[i] = f"'{right_side[i]}'"
+            if i == len(right_side) - 1:
+                right_side_str += right_side[i]
+            else:
+                right_side_str += right_side[i] + " | "
+        result_P += key + " -> " + right_side_str + "\n"
+    return result, result_P
